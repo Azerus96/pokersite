@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Tournament</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Tournament in Progress</h1>
+
+    <div id="poker-table">
+        <!-- Слоты для игроков -->
+        <div id="player-1" class="player-slot">Player 1<br />Stack: $5000
+            <div class="player-cards"><img src="/static/cards/AS.png"><img src="/static/cards/KH.png"></div>
+        </div>
+        <div id="player-2" class="player-slot">Player 2<br />Stack: $6500
+            <div class="player-cards"><img src="/static/cards/back.png"><img src="/static/cards/back.png"></div>
+        </div>
+        <div id="player-3" class="player-slot">Player 3<br />Stack: $7000
+            <div class="player-cards"><img src="/static/cards/back.png"><img src="/static/cards/back.png"></div>
+        </div>
+        <div id="player-4" class="player-slot">Player 4<br />Stack: $4000
+            <div class="player-cards"><img src="/static/cards/back.png"><img src="/static/cards/back.png"></div>
+        </div> 
+        <!-- Продолжай добавлять игроков и их карты -->
+    </div>
+
+    <div id="player-actions">
+        <button id="fold-btn" onclick="makeAction('fold')">Fold</button>
+        <button id="call-btn" onclick="makeAction('call')">Call/Check</button>
+
+        <div id="raise-wrapper">
+            <input type="range" id="raise-range" min="0" max="10000" step="100" value="500" onchange="updateRaiseValue(this.value)">
+            <label for="raise-range">Raise</label>
+            <span id="raise-value">$500</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        function updateRaiseValue(value) {
+            document.getElementById('raise-value').innerText = `$${value}`;
+        }
+
+        function makeAction(action) {
+            const raiseValue = document.getElementById('raise-range').value;
+            const data = { action: action, raise: raiseValue };
+            socket.emit('player_action', data);  // Отправляем действие на сервер
+        }
+
+        socket.on('update_tournament', function(data) {
+            const tables_div = document.getElementById('poker-table');
+            tables_div.innerHTML = "";  // Сначала чистим таблицу
+
+            data.tables.forEach((table, index) => {
+                let html = `<h3>Table ${index + 1}</h3><ul>`;
+                table.players.forEach(player => {
+                    html += `<li>${player.name} - Stack: ${player.stack} | Cards: ${player.cards.join(', ')}</li>`;
+                });
+                html += `</ul>`;
+                tables_div.innerHTML += html;
+            });
+        });
+    </script>
+</body>
+</html>
