@@ -2,39 +2,10 @@ import os
 import asyncio
 from config import PokerTournamentConfig
 from player import PokerPlayer
-from poker_game import PokerGame
+from poker_game import PokerGame, setup_tournament
 from logging_system import Logger
 from database import TournamentDatabase
-from utils import generate_player_name
-from web_server import update_tournament_state  # Для обновления состояния через WebSocket
-from mccfr import MCCFR  # Импорт MCCFR для использования
-
-# Настройки турнира
-def setup_tournament(num_players=160, load_previous_state=False, mccfr_strategy=None):
-    """
-    Инициализация турнира (создание игроков и настройка игры).
-    Использование общего объекта MCCFR стратегии для всех ИИ-игроков.
-
-    num_players: количество игроков
-    load_previous_state: если True, загружаются прошлые состояния
-    mccfr_strategy: общая MCCFR стратегия для ботов
-    """
-    config = PokerTournamentConfig()
-
-    players = []
-    for i in range(num_players):
-        player_name = generate_player_name()
-
-        # Бот использует MCCFR стратегию, если она передана
-        player = PokerPlayer(player_name, config.starting_stack, use_mccfr=True, mccfr_strategy=mccfr_strategy)
-
-        # Загружаем предыдущее состояние игроков, если это требуется
-        if load_previous_state and os.path.exists(f"{player_name}_state.pkl"):
-            player.load_state(f"{player_name}_state.pkl")
-
-        players.append(player)
-
-    return PokerGame(players, config)
+from mccfr import MCCFR
 
 # Основная функция турнира
 async def main():
@@ -73,3 +44,6 @@ async def main():
 
     except Exception as e:
         logger.log_event(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
